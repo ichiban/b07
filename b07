@@ -1,0 +1,76 @@
+#!/usr/bin/env ruby
+
+require 'thor'
+require 'twitter'
+require 'active_record'
+require 'logger'
+require 'natto'
+
+require './occurrence'
+
+config = YAML::load(File.open('config.yaml'))
+ActiveRecord::Base.establish_connection(config['database'])
+ActiveRecord::Base.logger = Logger.new('db.log')
+
+twitter_config = config['twitter']
+Twitter.configure do |c|
+  c.consumer_key = twitter_config['consumer_key']
+  c.consumer_secret = twitter_config['consumer_secret']
+  c.oauth_token = twitter_config['oauth_token']
+  c.oauth_token_secret = twitter_config['oauth_token_secret']
+end
+
+class B07 < Thor
+  desc 'migrate', 'migrate db'
+  def migrate
+    ActiveRecord::Migrator.migrate('db/migrate')
+  end
+
+  desc 'learn TEXT', 'learn new TEXT'
+  def learn text
+    one = two = three = nil
+
+    Natto::MeCab.new.parse(text) do |n|
+      three = n.surface
+
+      Occurrence.put one, two, three
+
+      one = two
+      two = three
+    end
+
+    return unless two || three
+    
+    Occurrence.put two, three, nil
+  end
+
+  desc 'forget', 'forget everything'
+  def forget
+  end
+
+  desc 'tweet TEXT', 'tweet, er.. the TEXT'
+  def tweet text
+    client = Twitter::Client.new
+    client.update text
+  end
+
+  desc 'random', 'tweet a random tweet'
+  method_option :dry, :type => :boolean, :aliases => '-d'
+  def random
+    o = Occurrence.get(nil, nil)
+    t = ''
+
+    until o.three.nil? || t.size >= 140
+      t << o.three
+      o = Occurrence.get(o.two, o.three)
+    end
+
+    if options.dry?
+      puts t
+    else
+      tweet t
+    end
+  end
+end
+
+B07.start
