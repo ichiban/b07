@@ -1,0 +1,72 @@
+#!/usr/bin/env ruby
+$LOAD_PATH.unshift File.join(File.dirname(__FILE__), '..', 'lib')
+require 'thor'
+require 'B07'
+
+class B07App < Thor
+  desc 'config', 'configure twitter settings'
+  method_option :id, :type => :string, :aliases => '-i', :default => 'b07'
+  method_option :host, :type => :string, :aliases => '-h', :default => '127.0.0.1'
+  method_option :port, :type => :numeric, :aliases => '-p', :default => 6379
+  method_option :consumer_key, :type => :string
+  method_option :consumer_secret, :type => :string
+  method_option :oauth_token, :type => :string
+  method_option :oauth_token_secret, :type => :string
+  def config
+    bot = B07::Bot.new(options.id, options.host, options.port)
+    bot.consumer_key = options.consumer_key if options.consumer_key
+    bot.consumer_secret = options.consumer_secret if options.consumer_secret
+    bot.oauth_token = options.oauth_token if options.oauth_token
+    bot.oauth_token_secret = options.oauth_token_secret if options.oauth_token_secret
+    puts "consumer_key:       #{bot.consumer_key}"
+    puts "consumer_secret:    #{bot.consumer_secret}"
+    puts "oauth_token:        #{bot.oauth_token}"
+    puts "oauth_token_secret: #{bot.oauth_token_secret}"
+  end
+
+  desc 'learn TEXT', 'learn new TEXT'
+  method_option :id, :type => :string, :aliases => '-i', :default => 'b07'
+  method_option :host, :type => :string, :aliases => '-h', :default => '127.0.0.1'
+  method_option :port, :type => :numeric, :aliases => '-p', :default => 6379
+  def learn text
+    bot = B07::Bot.new(options.id, options.host, options.port)
+    bot.learn text
+  end
+
+  desc 'load FILE', 'learn from FILE'
+  method_option :id, :type => :string, :aliases => '-i', :default => 'b07'
+  method_option :host, :type => :string, :aliases => '-h', :default => '127.0.0.1'
+  method_option :port, :type => :numeric, :aliases => '-p', :default => 6379
+  def load file
+    bot = B07::Bot.new(options.id, options.host, options.port)
+    bot.load file
+  end
+
+  desc 'forget', 'forget every word'
+  method_option :id, :type => :string, :aliases => '-i', :default => 'b07'
+  method_option :host, :type => :string, :aliases => '-h', :default => '127.0.0.1'
+  method_option :port, :type => :numeric, :aliases => '-p', :default => 6379
+  def forget
+    bot = B07::Bot.new(options.id, options.host, options.port)
+    bot.forget
+  end
+
+  desc 'tweet TEXT', 'tweet, er.. the TEXT'
+  def tweet text
+    bot = B07::Bot.new(options.id, options.host, options.port)
+    bot.tweet text
+  end
+
+  desc 'random', 'tweet a random tweet'
+  method_option :id, :type => :string, :aliases => '-i', :default => 'b07'
+  method_option :host, :type => :string, :aliases => '-h', :default => '127.0.0.1'
+  method_option :port, :type => :numeric, :aliases => '-p', :default => 6379
+  method_option :dry, :type => :boolean, :aliases => '-d'
+  method_option :tag, :type => :string, :aliases => '-t'
+  def random
+    bot = B07::Bot.new(options.id, options.host, options.port)
+    bot.random(options.dry, options.tag)
+  end
+end
+
+B07App.start
